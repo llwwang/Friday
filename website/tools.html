@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实用工具 | Friday</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        
+        /* 导航栏 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(26, 26, 46, 0.95);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 0 20px;
+        }
+        
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+        
+        .navbar-brand {
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ffff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .navbar-brand::before {
+            content: '◈';
+            color: #ff00ff;
+        }
+        
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .nav-link:hover {
+            background: rgba(0, 255, 255, 0.1);
+            color: #00ffff;
+            border-color: rgba(0, 255, 255, 0.3);
+        }
+        
+        .nav-link.active {
+            background: rgba(0, 255, 255, 0.15);
+            color: #00ffff;
+            border-color: rgba(0, 255, 255, 0.5);
+        }
+        
+        /* 主内容 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* 工具卡片网格 */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        
+        /* 工具卡片 */
+        .tool-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .tool-card h2 {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #00ffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .tool-card h2::before {
+            content: '▸';
+            color: #ff00ff;
+        }
+        
+        /* IP显示区域 */
+        .ip-display {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .ip-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .ip-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #00ffff;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 10px;
+        }
+        
+        .ip-location {
+            font-size: 14px;
+            color: #888;
+        }
+        
+        /* 输入框 */
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #00ffff;
+        }
+        
+        .input-group input::placeholder {
+            color: #666;
+        }
+        
+        /* 按钮 */
+        .btn {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #00ffff, #00cccc);
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        /* 结果展示 */
+        .result-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .result-box.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-label {
+            color: #888;
+            font-size: 13px;
+        }
+        
+        .result-value {
+            color: #00ffff;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        /* 错误提示 */
+        .error-msg {
+            color: #ff4d4f;
+            font-size: 12px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .error-msg.show {
+            display: block;
+        }
+        
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="/" class="navbar-brand">Friday</a>
+            <div class="navbar-nav">
+                <a href="/" class="nav-link">🏠 首页</a>
+                <a href="/stats.html" class="nav-link">📊 访问统计</a>
+                <a href="/stock.html" class="nav-link">📈 股票监控</a>
+                <a href="/tools.html" class="nav-link active">🛠️ 实用工具</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <h1>🛠️ 实用工具</h1>
+        
+        <div class="tools-grid">
+            <!-- 工具1: 当前IP查询 -->
+            <div class="tool-card">
+                <h2>当前IP查询</h2>
+                <div class="ip-display">
+                    <div class="ip-label">您的IP地址</div>
+                    <div class="ip-value" id="currentIP">加载中...</div>
+                    <div class="ip-location" id="ipLocation">--</div>
+                </div>
+                <button class="btn" onclick="refreshIP()">🔄 刷新IP信息</button>
+            </div>
+            
+            <!-- 工具2: IP段计算器 -->
+            <div class="tool-card">
+                <h2>IP段计算器</h2>
+                <div class="input-group">
+                    <label>CIDR格式 (如: 192.168.1.0/24)</label>
+                    <input type="text" id="cidrInput" placeholder="输入IP段，例如: 192.168.1.0/24">
+                </div>
+                <button class="btn" onclick="calculateIPRange()">🔍 计算IP范围</button>
+                <div class="error-msg" id="errorMsg">请输入有效的CIDR格式</div>
+                
+                <div class="result-box" id="resultBox">
+                    <div class="result-item">
+                        <span class="result-label">网络地址</span>
+                        <span class="result-value" id="networkAddr">--</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">子网掩码</span>
+                        <span class="result-value" id="subnetMask">--</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">可用IP范围</span>
+                        <span class="result-value" id="ipRange">--</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">可用IP数量</span>
+                        <span class="result-value" id="ipCount">--</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">广播地址</span>
+                        <span class="result-value" id="broadcastAddr">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 获取当前IP
+        async function getCurrentIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch (error) {
+                console.error('Error getting IP:', error);
+                return '获取失败';
+            }
+        }
+        
+        // 获取IP地理位置
+        async function getIPLocation(ip) {
+            try {
+                const response = await fetch(`https://ipapi.co/${ip}/json/`);
+                const data = await response.json();
+                if (data.error) {
+                    return null;
+                }
+                return {
+                    city: data.city,
+                    region: data.region,
+                    country: data.country_name,
+                    org: data.org
+                };
+            } catch (error) {
+                console.error('Error getting location:', error);
+                return null;
+            }
+        }
+        
+        // 刷新IP信息
+        async function refreshIP() {
+            document.getElementById('currentIP').textContent = '加载中...';
+            document.getElementById('ipLocation').textContent = '--';
+            
+            const ip = await getCurrentIP();
+            document.getElementById('currentIP').textContent = ip;
+            
+            if (ip !== '获取失败') {
+                const location = await getIPLocation(ip);
+                if (location) {
+                    const locationStr = [location.country, location.region, location.city]
+                        .filter(Boolean)
+                        .join(' ');
+                    const orgStr = location.org ? ` (${location.org})` : '';
+                    document.getElementById('ipLocation').textContent = locationStr + orgStr;
+                } else {
+                    document.getElementById('ipLocation').textContent = '位置信息获取失败';
+                }
+            }
+        }
+        
+        // IP段计算器
+        function calculateIPRange() {
+            const input = document.getElementById('cidrInput').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            const resultBox = document.getElementById('resultBox');
+            
+            // 验证CIDR格式
+            const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
+            if (!cidrRegex.test(input)) {
+                errorMsg.classList.add('show');
+                resultBox.classList.remove('show');
+                return;
+            }
+            
+            errorMsg.classList.remove('show');
+            
+            try {
+                const [ipPart, maskPart] = input.split('/');
+                const mask = parseInt(maskPart);
+                
+                if (mask < 0 || mask > 32) {
+                    throw new Error('Invalid mask');
+                }
+                
+                // 将IP转换为数字
+                const ipParts = ipPart.split('.').map(Number);
+                const ipNum = (ipParts[0] << 24) + (ipParts[1] << 16) + 
+                             (ipParts[2] << 8) + ipParts[3];
+                
+                // 计算掩码
+                const maskNum = mask === 0 ? 0 : (-1 << (32 - mask)) >>> 0;
+                
+                // 网络地址
+                const networkNum = (ipNum & maskNum) >>> 0;
+                
+                // 广播地址
+                const broadcastNum = (networkNum | (~maskNum >>> 0)) >>> 0;
+                
+                // 第一个可用IP
+                const firstIP = networkNum + 1;
+                
+                // 最后一个可用IP
+                const lastIP = broadcastNum - 1;
+                
+                // 可用IP数量
+                const count = mask === 31 ? 2 : (mask === 32 ? 1 : lastIP - firstIP + 1);
+                
+                // 转换回IP格式
+                const toIP = (num) => {
+                    return [(num >>> 24) & 255, (num >>> 16) & 255, 
+                           (num >>> 8) & 255, num & 255].join('.');
+                };
+                
+                // 掩码IP
+                const maskIP = toIP(maskNum);
+                
+                // 显示结果
+                document.getElementById('networkAddr').textContent = toIP(networkNum);
+                document.getElementById('subnetMask').textContent = maskIP;
+                document.getElementById('ipRange').textContent = 
+                    mask === 32 ? toIP(networkNum) : `${toIP(firstIP)} - ${toIP(lastIP)}`;
+                document.getElementById('ipCount').textContent = count.toLocaleString();
+                document.getElementById('broadcastAddr').textContent = toIP(broadcastNum);
+                
+                resultBox.classList.add('show');
+                
+            } catch (error) {
+                console.error('Calculation error:', error);
+                errorMsg.textContent = '计算错误，请检查输入格式';
+                errorMsg.classList.add('show');
+                resultBox.classList.remove('show');
+            }
+        }
+        
+        // 页面加载时获取IP
+        refreshIP();
+        
+        // 记录访问
+        fetch('/api/visit', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ page: window.location.pathname })
+        }).catch(() => {});
+    </script>
+</body>
+</html>
