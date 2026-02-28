@@ -50,13 +50,114 @@
             pointer-events: none;
         }
         
+        /* 导航栏 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(10, 10, 15, 0.95);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 0 20px;
+        }
+        
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+        
+        .navbar-brand {
+            font-family: 'Orbitron', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ffff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .navbar-brand::before {
+            content: '◈';
+            color: #ff00ff;
+        }
+        
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .nav-link:hover {
+            background: rgba(0, 255, 255, 0.1);
+            color: #00ffff;
+            border-color: rgba(0, 255, 255, 0.3);
+        }
+        
+        .nav-link.active {
+            background: rgba(0, 255, 255, 0.15);
+            color: #00ffff;
+            border-color: rgba(0, 255, 255, 0.5);
+        }
+        
+        .nav-link.coming-soon {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .nav-link.coming-soon:hover {
+            background: rgba(255, 0, 255, 0.1);
+            color: #ff00ff;
+            border-color: rgba(255, 0, 255, 0.3);
+        }
+        
+        .nav-icon {
+            font-size: 16px;
+        }
+        
+        .nav-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: linear-gradient(135deg, #ff00ff, #00ffff);
+            color: #000;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-family: 'Orbitron', monospace;
+        }
+        
         /* 主容器 */
         .main-wrapper {
             display: flex;
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 100px 20px 40px;
             gap: 30px;
             position: relative;
             z-index: 2;
@@ -644,6 +745,41 @@
     </style>
 </head>
 <body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="/" class="navbar-brand">Friday</a>
+            <div class="navbar-nav">
+                <div class="nav-item">
+                    <a href="/" class="nav-link active">
+                        <span class="nav-icon">🏠</span>
+                        <span>首页</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/stats.html" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>访问统计</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link coming-soon" onclick="alert('股票监控功能开发中...'); return false;">
+                        <span class="nav-icon">📈</span>
+                        <span>股票监控</span>
+                        <span class="nav-badge">SOON</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link coming-soon" onclick="alert('实用工具集开发中...'); return false;">
+                        <span class="nav-icon">🛠️</span>
+                        <span>实用工具</span>
+                        <span class="nav-badge">SOON</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
     <!-- 代码雨画布 -->
     <canvas id="matrixCanvas"></canvas>
     
