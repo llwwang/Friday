@@ -769,10 +769,9 @@
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#" class="nav-link coming-soon" onclick="alert('实用工具集开发中...'); return false;">
+                    <a href="/tools.html" class="nav-link">
                         <span class="nav-icon">🛠️</span>
                         <span>实用工具</span>
-                        <span class="nav-badge">SOON</span>
                     </a>
                 </div>
             </div>
@@ -1426,7 +1425,11 @@
         }
         
         // 记录本次访问
-        fetch('/api/visit', { method: 'POST' }).catch(() => {});
+        fetch('/api/visit', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ page: window.location.pathname })
+        }).catch(() => {});
         
         // 初始化
         showRandomQuote();
