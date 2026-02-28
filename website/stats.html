@@ -223,6 +223,11 @@
         .time {
             color: #666;
         }
+
+        .device {
+            color: #ff00ff;
+            font-size: 0.9em;
+        }
         
         .alert-box {
             background: linear-gradient(135deg, rgba(255, 0, 0, 0.2), rgba(255, 100, 0, 0.2));
@@ -283,10 +288,9 @@
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#" class="nav-link coming-soon" onclick="alert('股票监控功能开发中...'); return false;">
+                    <a href="/stock.html" class="nav-link">
                         <span class="nav-icon">📈</span>
                         <span>股票监控</span>
-                        <span class="nav-badge">SOON</span>
                     </a>
                 </div>
                 <div class="nav-item">
@@ -537,18 +541,55 @@
             }
         }
         
+        // 获取设备类型
+        function getDeviceType(ua) {
+            if (!ua) return '💻 桌面';
+            
+            if (ua.includes('Mobile') || ua.includes('Android') || ua.includes('iPhone')) {
+                return '📱 移动';
+            } else if (ua.includes('iPad') || ua.includes('Tablet')) {
+                return '📱 平板';
+            } else if (ua.includes('curl') || ua.includes('wget') || ua.includes('httpie')) {
+                return '🔧 工具';
+            } else if (ua.includes('bot') || ua.includes('spider') || ua.includes('crawler') || ua.includes('Baidu') || ua.includes('Google')) {
+                return '🕷️ 爬虫';
+            } else {
+                return '💻 桌面';
+            }
+        }
+        
         function updateVisitorList(visitors) {
             const container = document.getElementById('visitorList');
             const recentVisitors = visitors.slice(0, 20);
-            
+
             container.innerHTML = recentVisitors.map(v => {
                 const time = new Date(v.time).toLocaleTimeString('zh-CN');
                 const ip = v.ip;
-                const city = v.location ? v.location.city : 'Unknown';
+                const deviceType = getDeviceType(v.ua);
+                
+                // Build location string with city, region, country, and ISP
+                let locationStr = 'Unknown';
+                if (v.location) {
+                    const parts = [];
+                    if (v.location.country && v.location.country !== 'Unknown') {
+                        parts.push(v.location.country);
+                    }
+                    if (v.location.region && v.location.region !== v.location.city) {
+                        parts.push(v.location.region);
+                    }
+                    if (v.location.city && v.location.city !== 'Unknown') {
+                        parts.push(v.location.city);
+                    }
+                    if (v.location.isp) {
+                        parts.push(`(${v.location.isp})`);
+                    }
+                    locationStr = parts.join(' ') || 'Unknown';
+                }
                 return `
                     <div class="visitor-item">
                         <span class="ip">${ip}</span>
-                        <span class="location">${city}</span>
+                        <span class="location">${locationStr}</span>
+                        <span class="device">${deviceType}</span>
                         <span class="time">${time}</span>
                     </div>
                 `;
