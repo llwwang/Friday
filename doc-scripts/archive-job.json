@@ -1,0 +1,21 @@
+{
+  "action": "add",
+  "job": {
+    "name": "记忆归档通知",
+    "schedule": {
+      "kind": "cron",
+      "expr": "5 18 * * *",
+      "tz": "Asia/Shanghai"
+    },
+    "sessionTarget": "isolated",
+    "wakeMode": "now",
+    "deleteAfterRun": true,
+    "payload": {
+      "kind": "agentTurn",
+      "message": "检查今天的记忆归档情况。如果已完成，告知用户：'陛下，今天的记忆已归档完成！📋✨ 重要事项已保存到 MEMORY.md，请查阅~'",
+      "deliver": true,
+      "channel": "qqbot",
+      "to": "D43A2F9DB2CD7E5B3C7FCB2161BA35C9"
+    }
+  }
+}
