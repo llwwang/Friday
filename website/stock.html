@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票看板 | Friday</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        
+        /* 导航栏 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(26, 26, 46, 0.95);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 0 20px;
+        }
+        
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+        
+        .navbar-brand {
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ffff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .navbar-brand::before {
+            content: '◈';
+            color: #ff00ff;
+        }
+        
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .nav-link:hover {
+            background: rgba(0, 255, 255, 0.1);
+            color: #00ffff;
+            border-color: rgba(0, 255, 255, 0.3);
+        }
+        
+        .nav-link.active {
+            background: rgba(0, 255, 255, 0.15);
+            color: #00ffff;
+            border-color: rgba(0, 255, 255, 0.5);
+        }
+        
+        .nav-icon {
+            font-size: 16px;
+        }
+        
+        /* 主内容区 */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 80px 20px 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* 市场状态 */
+        .market-status {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .market-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .market-badge.hk {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+        }
+        
+        .market-badge.us {
+            background: rgba(255, 0, 255, 0.1);
+            border: 1px solid #ff00ff;
+            color: #ff00ff;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff00;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* 股票卡片网格 */
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        /* 股票卡片 */
+        .stock-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s, border-color 0.3s;
+            cursor: pointer;
+        }
+        
+        .stock-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 255, 255, 0.3);
+        }
+        
+        .stock-card.up {
+            border-left: 4px solid #ff4d4f;
+        }
+        
+        .stock-card.down {
+            border-left: 4px solid #52c41a;
+        }
+        
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        
+        .stock-info h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .stock-code {
+            font-size: 12px;
+            color: #888;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .stock-price {
+            text-align: right;
+        }
+        
+        .price {
+            font-size: 28px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .price.up { color: #ff4d4f; }
+        .price.down { color: #52c41a; }
+        
+        .change {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .change.up { color: #ff4d4f; }
+        .change.down { color: #52c41a; }
+        
+        /* 行情数据 */
+        .stock-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .detail-item {
+            text-align: center;
+        }
+        
+        .detail-label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 3px;
+        }
+        
+        .detail-value {
+            font-size: 14px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+        
+        /* 更新时间 */
+        .update-time {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #888;
+        }
+        
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00ffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 错误提示 */
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #ff4d4f;
+        }
+        
+        /* 迷你图表占位 */
+        .mini-chart {
+            height: 60px;
+            margin-top: 15px;
+            background: rgba(0, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        /* 分组标题 */
+        .stock-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+        
+        .section-title.hk {
+            background: rgba(0, 255, 255, 0.1);
+            border-left: 4px solid #00ffff;
+            color: #00ffff;
+        }
+        
+        .section-title.us {
+            background: rgba(255, 0, 255, 0.1);
+            border-left: 4px solid #ff00ff;
+            color: #ff00ff;
+        }
+        
+        /* Sparkline chart */
+        .sparkline {
+            height: 50px;
+            margin-top: 10px;
+        }
+        
+        .sparkline svg {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="/" class="navbar-brand">Friday</a>
+            <div class="navbar-nav">
+                <div class="nav-item">
+                    <a href="/" class="nav-link">
+                        <span class="nav-icon">🏠</span>
+                        <span>首页</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/stats.html" class="nav-link">
+                        <span class="nav-icon">📊</span>
+                        <span>访问统计</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/stock.html" class="nav-link active">
+                        <span class="nav-icon">📈</span>
+                        <span>股票监控</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="alert('实用工具集开发中...'); return false;">
+                        <span class="nav-icon">🛠️</span>
+                        <span>实用工具</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <h1>📈 股票看板</h1>
+        
+        <!-- 市场状态 -->
+        <div class="market-status">
+            <div class="market-badge hk">
+                <span class="status-dot"></span>
+                <span>港股交易中</span>
+            </div>
+            <div class="market-badge us">
+                <span class="status-dot"></span>
+                <span>美股交易中</span>
+            </div>
+        </div>
+        
+        <!-- 股票列表 -->
+        <div id="stockList" class="stock-grid">
+            <div class="loading">正在加载股票数据...</div>
+        </div>
+        
+        <!-- 更新时间 -->
+        <div class="update-time">
+            数据更新时间: <span id="updateTime">--</span>
+        </div>
+    </div>
+    
+    <script>
+        // 股票配置
+        const stocks = [
+            // 港股
+            { code: '00700', name: '腾讯控股', market: 'hk', symbol: '00700.HK' },
+            { code: '03690', name: '美团', market: 'hk', symbol: '03690.HK' },
+            { code: '09988', name: '阿里巴巴', market: 'hk', symbol: '09988.HK' },
+            { code: '01810', name: '小米集团', market: 'hk', symbol: '01810.HK' },
+            // 美股
+            { code: 'AAPL', name: '苹果', market: 'us', symbol: 'AAPL' },
+            { code: 'TSLA', name: '特斯拉', market: 'us', symbol: 'TSLA' },
+            { code: 'NVDA', name: '英伟达', market: 'us', symbol: 'NVDA' },
+            { code: 'MSFT', name: '微软', market: 'us', symbol: 'MSFT' },
+            { code: 'GOOGL', name: '谷歌', market: 'us', symbol: 'GOOGL' },
+            { code: 'BABA', name: '阿里巴巴', market: 'us', symbol: 'BABA' }
+        ];
+        
+        // 获取腾讯财经股票数据（支持跨域）
+        async function fetchStockData(stock) {
+            try {
+                let url;
+                if (stock.market === 'hk') {
+                    // 港股: hkCODE
+                    url = `https://qt.gtimg.cn/q=hk${stock.code}`;
+                } else {
+                    // 美股: usCODE
+                    url = `https://qt.gtimg.cn/q=us${stock.code}`;
+                }
+                
+                // 使用文本格式返回
+                const response = await fetch(url);
+                const text = await response.text();
+                
+                // 解析腾讯财经数据格式: v_hk00700="1~腾讯控股~00700~...";
+                const match = text.match(/v_\w+="([^"]*)"/);
+                if (match && match[1]) {
+                    const parts = match[1].split('~');
+                    if (parts.length > 30) {
+                        // 腾讯数据格式: 
+                        // parts[1]=名称, parts[2]=代码, parts[3]=当前价, parts[4]=昨收, parts[5]=今开
+                        // parts[6]=成交量, parts[7]=外盘, parts[8]=内盘
+                        // parts[9]=买一价, parts[10]=买一量, parts[11]=买二价...
+                        // parts[33]=最高价, parts[34]=最低价
+                        // parts[35]=最近逐笔成交, parts[36]=时间, parts[37]=涨跌额
+                        // parts[38]=涨跌幅, parts[39]=市盈率, parts[40]=市值
+                        
+                        const price = parseFloat(parts[3]);
+                        const prevClose = parseFloat(parts[4]);
+                        const change = price - prevClose;
+                        const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0;
+                        
+                        return {
+                            name: stock.name,
+                            code: stock.symbol,
+                            price: price,
+                            change: change,
+                            changePercent: changePercent,
+                            open: parseFloat(parts[5]) || prevClose,
+                            high: parseFloat(parts[33]) || price,
+                            low: parseFloat(parts[34]) || price,
+                            prevClose: prevClose,
+                            volume: parseInt(parts[6]) || 0,
+                            market: stock.market
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error(`Error fetching ${stock.code}:`, error);
+            }
+            return null;
+        }
+        
+        // 生成Sparkline SVG
+        function generateSparkline(isUp) {
+            // 生成随机走势数据
+            const points = [];
+            let value = 50;
+            for (let i = 0; i < 20; i++) {
+                value += (Math.random() - 0.5) * 20;
+                value = Math.max(10, Math.min(90, value));
+                points.push(value);
+            }
+            
+            // 计算SVG路径
+            const min = Math.min(...points);
+            const max = Math.max(...points);
+            const range = max - min || 1;
+            
+            const svgPoints = points.map((p, i) => {
+                const x = (i / (points.length - 1)) * 100;
+                const y = 100 - ((p - min) / range) * 80 - 10;
+                return `${x},${y}`;
+            }).join(' ');
+            
+            const color = isUp ? '#ff4d4f' : '#52c41a';
+            
+            return `
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <polyline fill="none" stroke="${color}" stroke-width="2" points="${svgPoints}"/>
+                    <circle cx="100" cy="${100 - ((points[points.length-1] - min) / range) * 80 - 10}" r="3" fill="${color}"/>
+                </svg>
+            `;
+        }
+        
+        // 渲染股票卡片
+        function renderStockCard(data) {
+            if (!data) return '';
+            
+            const isUp = data.changePercent >= 0;
+            const changeSymbol = isUp ? '+' : '';
+            const priceClass = isUp ? 'up' : 'down';
+            
+            // 计算涨跌额
+            const changeAmount = data.prevClose ? (data.price - data.prevClose) : 0;
+            
+            // 生成迷你走势图
+            const sparklineSvg = generateSparkline(isUp);
+            
+            return `
+                <div class="stock-card ${priceClass}">
+                    <div class="stock-header">
+                        <div class="stock-info">
+                            <h3>${data.name}</h3>
+                            <div class="stock-code">${data.code}</div>
+                        </div>
+                        <div class="stock-price">
+                            <div class="price ${priceClass}">${data.price.toFixed(2)}</div>
+                            <div class="change ${priceClass}">
+                                ${changeSymbol}${data.changePercent.toFixed(2)}%
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stock-details">
+                        <div class="detail-item">
+                            <div class="detail-label">今开</div>
+                            <div class="detail-value">${data.open ? data.open.toFixed(2) : '--'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">最高</div>
+                            <div class="detail-value">${data.high ? data.high.toFixed(2) : '--'}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">最低</div>
+                            <div class="detail-value">${data.low ? data.low.toFixed(2) : '--'}</div>
+                        </div>
+                    </div>
+                    <div class="sparkline">${sparklineSvg}</div>
+                </div>
+            `;
+        }
+        
+        // 加载所有股票数据
+        async function loadStockData() {
+            const container = document.getElementById('stockList');
+            container.innerHTML = '<div class="loading">正在加载股票数据...</div>';
+            
+            try {
+                const results = await Promise.all(stocks.map(fetchStockData));
+                const validData = results.filter(d => d !== null);
+                
+                if (validData.length > 0) {
+                    // 分组显示：港股和美股
+                    const hkStocks = validData.filter(s => s.market === 'hk');
+                    const usStocks = validData.filter(s => s.market === 'us');
+                    
+                    let html = '';
+                    
+                    // 港股部分
+                    if (hkStocks.length > 0) {
+                        html += '<div class="stock-section"><h2 class="section-title hk">🇭🇰 港股</h2><div class="stock-grid">';
+                        html += hkStocks.map(renderStockCard).join('');
+                        html += '</div></div>';
+                    }
+                    
+                    // 美股部分
+                    if (usStocks.length > 0) {
+                        html += '<div class="stock-section"><h2 class="section-title us">🇺🇸 美股</h2><div class="stock-grid">';
+                        html += usStocks.map(renderStockCard).join('');
+                        html += '</div></div>';
+                    }
+                    
+                    container.innerHTML = html;
+                    document.getElementById('updateTime').textContent = new Date().toLocaleString('zh-CN');
+                } else {
+                    container.innerHTML = '<div class="error">无法获取股票数据，请稍后重试</div>';
+                }
+            } catch (error) {
+                console.error('Error loading stocks:', error);
+                container.innerHTML = '<div class="error">加载失败，请检查网络连接</div>';
+            }
+        }
+        
+        // 页面加载时获取数据
+        loadStockData();
+        
+        // 每30秒刷新一次
+        setInterval(loadStockData, 30000);
+        
+        // Record visit for this page
+        fetch('/api/visit', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ page: window.location.pathname })
+        }).catch(() => {});
+    </script>
+</body>
+</html>
