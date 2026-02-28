@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>leozwang.com 访问统计</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-card h3 {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #00ffff;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .chart-container h2 {
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            color: #fff;
+        }
+        
+        .visitor-log {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .visitor-log h2 {
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .visitor-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85em;
+        }
+        
+        .visitor-item:last-child {
+            border-bottom: none;
+        }
+        
+        .ip {
+            color: #00ffff;
+        }
+        
+        .location {
+            color: #888;
+        }
+        
+        .time {
+            color: #666;
+        }
+        
+        .alert-box {
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.2), rgba(255, 100, 0, 0.2));
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        .alert-box.active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
+            transition: transform 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 leozwang.com 访问统计</h1>
+        
+        <div id="alertBox" class="alert-box">
+            🚨 今日访问量已超过 100 次！当前：<span id="alertCount">0</span>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>总访问量</h3>
+                <div class="stat-value" id="totalVisits">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>今日访问</h3>
+                <div class="stat-value" id="todayVisits">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>独立访客</h3>
+                <div class="stat-value" id="uniqueVisitors">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>城市分布</h3>
+                <div class="stat-value" id="cityCount">-</div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h2>📱 设备类型分布</h2>
+                <canvas id="deviceChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>🌍 访问城市 TOP 10</h2>
+                <canvas id="cityChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h2>📈 访问趋势（最近7天）</h2>
+                <canvas id="trendChart"></canvas>
+            </div>
+            <div class="visitor-log">
+                <h2>🕐 最近访问记录</h2>
+                <div id="visitorList">加载中...</div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="refresh-btn" onclick="loadStats()">🔄 刷新数据</button>
+    
+    <script>
+        let deviceChart, cityChart, trendChart;
+        
+        async function loadStats() {
+            try {
+                // Load basic stats
+                const statsRes = await fetch('/api/stats');
+                const stats = await statsRes.json();
+                
+                document.getElementById('totalVisits').textContent = stats.totalVisits;
+                document.getElementById('todayVisits').textContent = stats.todayVisits;
+                
+                // Show alert if visits > 100
+                if (stats.todayVisits > 100) {
+                    document.getElementById('alertBox').classList.add('active');
+                    document.getElementById('alertCount').textContent = stats.todayVisits;
+                }
+                
+                // Load visitors
+                const visitorsRes = await fetch('/api/visitors');
+                const visitorsData = await visitorsRes.json();
+                
+                document.getElementById('uniqueVisitors').textContent = visitorsData.total;
+                
+                // Analyze data
+                const visitors = visitorsData.visitors || [];
+                
+                // Device stats
+                const deviceStats = { mobile: 0, desktop: 0, spider: 0, other: 0 };
+                visitors.forEach(v => {
+                    const ua = v.ua || '';
+                    if (ua.includes('Mobile') || ua.includes('iPhone') || ua.includes('Android')) {
+                        deviceStats.mobile++;
+                    } else if (ua.includes('Baiduspider') || ua.includes('bot')) {
+                        deviceStats.spider++;
+                    } else if (ua.includes('Windows') || ua.includes('Macintosh') || ua.includes('Linux')) {
+                        deviceStats.desktop++;
+                    } else {
+                        deviceStats.other++;
+                    }
+                });
+                
+                // City stats
+                const cityStats = {};
+                visitors.forEach(v => {
+                    const city = v.location ? (v.location.city || 'Unknown') : 'Unknown';
+                    cityStats[city] = (cityStats[city] || 0) + 1;
+                });
+                
+                document.getElementById('cityCount').textContent = Object.keys(cityStats).length;
+                
+                // Update charts
+                updateDeviceChart(deviceStats);
+                updateCityChart(cityStats);
+                updateTrendChart();
+                updateVisitorList(visitors);
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        function updateDeviceChart(stats) {
+            const ctx = document.getElementById('deviceChart').getContext('2d');
+            
+            if (deviceChart) deviceChart.destroy();
+            
+            deviceChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['桌面端', '移动端', '爬虫', '其他'],
+                    datasets: [{
+                        data: [stats.desktop, stats.mobile, stats.spider, stats.other],
+                        backgroundColor: ['#00ffff', '#ff00ff', '#ffff00', '#888888'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#fff' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateCityChart(cityStats) {
+            const sortedCities = Object.entries(cityStats)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            const ctx = document.getElementById('cityChart').getContext('2d');
+            
+            if (cityChart) cityChart.destroy();
+            
+            cityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedCities.map(c => c[0]),
+                    datasets: [{
+                        label: '访问量',
+                        data: sortedCities.map(c => c[1]),
+                        backgroundColor: 'rgba(0, 255, 255, 0.6)',
+                        borderColor: '#00ffff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#888' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+        
+        async function updateTrendChart() {
+            try {
+                const res = await fetch('/api/trend');
+                const data = await res.json();
+                const trend = data.trend || [];
+                
+                const ctx = document.getElementById('trendChart').getContext('2d');
+                
+                if (trendChart) trendChart.destroy();
+                
+                trendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: trend.map(t => t.dayName),
+                        datasets: [{
+                            label: '访问量',
+                            data: trend.map(t => t.visits),
+                            borderColor: '#00ffff',
+                            backgroundColor: 'rgba(0, 255, 255, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#fff' }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: function(context) {
+                                        const idx = context[0].dataIndex;
+                                        return trend[idx].date;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: '#888' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            },
+                            x: {
+                                ticks: { color: '#888' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading trend:', error);
+            }
+        }
+        
+        function updateVisitorList(visitors) {
+            const container = document.getElementById('visitorList');
+            const recentVisitors = visitors.slice(0, 20);
+            
+            container.innerHTML = recentVisitors.map(v => {
+                const time = new Date(v.time).toLocaleTimeString('zh-CN');
+                const ip = v.ip;
+                const city = v.location ? v.location.city : 'Unknown';
+                return `
+                    <div class="visitor-item">
+                        <span class="ip">${ip}</span>
+                        <span class="location">${city}</span>
+                        <span class="time">${time}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Load on page load
+        loadStats();
+        
+        // Auto refresh every 30 seconds
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+</html>
