@@ -315,6 +315,12 @@
             display: inline-block;
         }
         
+        .section-title.cn {
+            background: rgba(255, 100, 0, 0.1);
+            border-left: 4px solid #ff6400;
+            color: #ff6400;
+        }
+        
         .section-title.hk {
             background: rgba(0, 255, 255, 0.1);
             border-left: 4px solid #00ffff;
@@ -364,7 +370,7 @@
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#" class="nav-link" onclick="alert('实用工具集开发中...'); return false;">
+                    <a href="/tools.html" class="nav-link">
                         <span class="nav-icon">🛠️</span>
                         <span>实用工具</span>
                     </a>
@@ -402,6 +408,13 @@
     <script>
         // 股票配置
         const stocks = [
+            // A股
+            { code: '600519', name: '贵州茅台', market: 'cn', symbol: '600519', exchange: 'sh' },
+            { code: '300750', name: '宁德时代', market: 'cn', symbol: '300750', exchange: 'sz' },
+            { code: '002594', name: '比亚迪', market: 'cn', symbol: '002594', exchange: 'sz' },
+            { code: '601318', name: '中国平安', market: 'cn', symbol: '601318', exchange: 'sh' },
+            { code: '000858', name: '五粮液', market: 'cn', symbol: '000858', exchange: 'sz' },
+            { code: '600036', name: '招商银行', market: 'cn', symbol: '600036', exchange: 'sh' },
             // 港股
             { code: '00700', name: '腾讯控股', market: 'hk', symbol: '00700.HK' },
             { code: '03690', name: '美团', market: 'hk', symbol: '03690.HK' },
@@ -423,6 +436,9 @@
                 if (stock.market === 'hk') {
                     // 港股: hkCODE
                     url = `https://qt.gtimg.cn/q=hk${stock.code}`;
+                } else if (stock.market === 'cn') {
+                    // A股: shCODE 或 szCODE
+                    url = `https://qt.gtimg.cn/q=${stock.exchange}${stock.code}`;
                 } else {
                     // 美股: usCODE
                     url = `https://qt.gtimg.cn/q=us${stock.code}`;
@@ -560,11 +576,19 @@
                 const validData = results.filter(d => d !== null);
                 
                 if (validData.length > 0) {
-                    // 分组显示：港股和美股
+                    // 分组显示：A股、港股和美股
+                    const cnStocks = validData.filter(s => s.market === 'cn');
                     const hkStocks = validData.filter(s => s.market === 'hk');
                     const usStocks = validData.filter(s => s.market === 'us');
                     
                     let html = '';
+                    
+                    // A股部分
+                    if (cnStocks.length > 0) {
+                        html += '<div class="stock-section"><h2 class="section-title cn">🇨🇳 A股</h2><div class="stock-grid">';
+                        html += cnStocks.map(renderStockCard).join('');
+                        html += '</div></div>';
+                    }
                     
                     // 港股部分
                     if (hkStocks.length > 0) {
