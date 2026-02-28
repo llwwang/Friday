@@ -294,10 +294,9 @@
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#" class="nav-link coming-soon" onclick="alert('实用工具集开发中...'); return false;">
+                    <a href="/tools.html" class="nav-link">
                         <span class="nav-icon">🛠️</span>
                         <span>实用工具</span>
-                        <span class="nav-badge">SOON</span>
                     </a>
                 </div>
             </div>
@@ -328,6 +327,10 @@
                 <h3>城市分布</h3>
                 <div class="stat-value" id="cityCount">-</div>
             </div>
+            <div class="stat-card">
+                <h3>页面数量</h3>
+                <div class="stat-value" id="pageCount">-</div>
+            </div>
         </div>
         
         <div class="charts-grid">
@@ -346,7 +349,14 @@
                 <h2>📈 访问趋势（最近7天）</h2>
                 <canvas id="trendChart"></canvas>
             </div>
-            <div class="visitor-log">
+            <div class="chart-container">
+                <h2>📄 页面访问分布</h2>
+                <canvas id="pageChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="visitor-log" style="grid-column: 1 / -1;">
                 <h2>🕐 最近访问记录</h2>
                 <div id="visitorList">加载中...</div>
             </div>
@@ -356,7 +366,7 @@
     <button class="refresh-btn" onclick="loadStats()">🔄 刷新数据</button>
     
     <script>
-        let deviceChart, cityChart, trendChart;
+        let deviceChart, cityChart, trendChart, pageChart;
         
         async function loadStats() {
             try {
@@ -405,6 +415,20 @@
                 });
                 
                 document.getElementById('cityCount').textContent = Object.keys(cityStats).length;
+                
+                // Load page stats
+                try {
+                    const pagesRes = await fetch('/api/pages');
+                    const pagesData = await pagesRes.json();
+                    document.getElementById('pageCount').textContent = pagesData.pages ? pagesData.pages.length : 0;
+                    
+                    // Update page chart if we have data
+                    if (pagesData.pages && pagesData.pages.length > 0) {
+                        updatePageChart(pagesData.pages);
+                    }
+                } catch (e) {
+                    console.error('Error loading page stats:', e);
+                }
                 
                 // Update charts
                 updateDeviceChart(deviceStats);
@@ -541,6 +565,70 @@
             }
         }
         
+        // Update page distribution chart
+        function updatePageChart(pages) {
+            const ctx = document.getElementById('pageChart').getContext('2d');
+            
+            if (pageChart) pageChart.destroy();
+            
+            // Sort by visit count and take top 8
+            const sortedPages = pages.sort((a, b) => b.total - a.total).slice(0, 8);
+            
+            pageChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedPages.map(p => {
+                        // Shorten page names
+                        const name = p.page === '/' ? '首页' : p.page.replace('.html', '').replace('/', '');
+                        return name.length > 10 ? name.substring(0, 10) + '...' : name;
+                    }),
+                    datasets: [{
+                        label: '访问量',
+                        data: sortedPages.map(p => p.total),
+                        backgroundColor: [
+                            'rgba(0, 255, 255, 0.6)',
+                            'rgba(255, 0, 255, 0.6)',
+                            'rgba(255, 255, 0, 0.6)',
+                            'rgba(0, 255, 0, 0.6)',
+                            'rgba(255, 100, 0, 0.6)',
+                            'rgba(100, 100, 255, 0.6)',
+                            'rgba(255, 100, 100, 0.6)',
+                            'rgba(100, 255, 100, 0.6)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    const idx = context[0].dataIndex;
+                                    return sortedPages[idx].page;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        x: {
+                            ticks: { 
+                                color: '#888',
+                                maxRotation: 45
+                            },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+        
         // 获取设备类型
         function getDeviceType(ua) {
             if (!ua) return '💻 桌面';
@@ -601,6 +689,13 @@
         
         // Auto refresh every 30 seconds
         setInterval(loadStats, 30000);
+        
+        // Record visit for this page
+        fetch('/api/visit', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ page: window.location.pathname })
+        }).catch(() => {});
     </script>
 </body>
 </html>
