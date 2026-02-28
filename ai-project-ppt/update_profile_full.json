@@ -1,0 +1,40 @@
+{
+  "name": "陛下",
+  "preferred_name": "吾皇",
+  "timezone": "Asia/Shanghai",
+  "work_hours": {"start": "09:00", "end": "18:00"},
+  "preferences": {
+    "communication_style": "flexible",
+    "reminder_style": "gentle",
+    "report_style": "flexible"
+  },
+  "goals": {
+    "current_focus": "AI能力建设",
+    "type": "团队项目",
+    "description": "大数据运维AI能力建设项目",
+    "phases": [
+      {
+        "phase": 1,
+        "name": "for一线-工单机器人",
+        "target": "工单机器人问答形式",
+        "features": ["基于现有知识库自动回应", "解决不了继续提单", "降低咨询工单量"],
+        "status": "规划中"
+      },
+      {
+        "phase": 2,
+        "name": "for二线-内部问答平台",
+        "target": "研发内部问答平台",
+        "features": ["结合MCP协议", "Agent技术", "拉通代码用于问题分析", "提升工单解决效率"],
+        "status": "规划中"
+      },
+      {
+        "phase": 3,
+        "name": "for客户-大数据自动化运维分身",
+        "target": "OpenClaw+Ollama产品化",
+        "features": ["私有化客户小模型", "客户内部运维操作自闭环", "自动化运维分身"],
+        "status": "规划中"
+      }
+    ]
+  },
+  "interests": ["AI", "大数据", "技术管理", "OpenClaw", "MCP", "Agent"]
+}
