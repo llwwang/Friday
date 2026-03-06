@@ -756,24 +756,28 @@
                 chinaMapChart = echarts.init(chartDom);
             }
             
-            // 统计中国各城市访问数
+            // 统计中国各城市访问数（兼容带"市"字的名称）
             const cityData = {};
             visitors.forEach(v => {
                 const loc = v.location || {};
-                const city = loc.city || loc.region;
-                if (city && chinaCityCoords[city]) {
-                    cityData[city] = (cityData[city] || 0) + 1;
+                let city = loc.city || loc.region;
+                if (city) {
+                    // 去掉"市"字后缀进行匹配
+                    const cityKey = city.replace(/市$/, '');
+                    if (chinaCityCoords[cityKey]) {
+                        cityData[cityKey] = (cityData[cityKey] || 0) + 1;
+                    }
                 }
             });
             
             // 转换为地图数据格式
             const mapData = Object.entries(cityData).map(([city, count]) => ({
                 name: city,
-                value: [...chinaCityCoords[city], count],
+                value: [...(chinaCityCoords[city] || [0, 0]), count],
                 itemStyle: {
                     color: count > 10 ? '#ff00ff' : count > 5 ? '#00ffff' : '#ffff00'
                 }
-            }));
+            })).filter(item => item.value[0] !== 0);
             
             // 构建飞线数据（模拟访问流向）
             const linesData = [];
@@ -783,14 +787,17 @@
             
             topCities.forEach(([city, count], idx) => {
                 if (idx < topCities.length - 1) {
-                    linesData.push({
-                        coords: [chinaCityCoords[city], chinaCityCoords[topCities[idx + 1][0]]],
-                        lineStyle: {
-                            color: idx === 0 ? '#ff00ff' : '#00ffff',
-                            width: 2,
-                            opacity: 0.6
-                        }
-                    });
+                    const nextCity = topCities[idx + 1][0];
+                    if (chinaCityCoords[city] && chinaCityCoords[nextCity]) {
+                        linesData.push({
+                            coords: [chinaCityCoords[city], chinaCityCoords[nextCity]],
+                            lineStyle: {
+                                color: idx === 0 ? '#ff00ff' : '#00ffff',
+                                width: 2,
+                                opacity: 0.6
+                            }
+                        });
+                    }
                 }
             });
             
@@ -900,36 +907,31 @@
                 worldMapChart = echarts.init(chartDom);
             }
             
-            // 统计各国访问数
+            // 统计各国访问数（兼容带"市"字的名称）
             const countryData = {};
             const cityData = {};
             
             visitors.forEach(v => {
                 const loc = v.location || {};
                 const country = loc.country || 'CN';
-                const city = loc.city;
+                let city = loc.city;
                 
                 countryData[country] = (countryData[country] || 0) + 1;
                 
-                // 匹配世界城市
+                // 匹配世界城市（去掉"市"字）
                 if (city) {
+                    const cityKey = city.replace(/市$/, '');
                     const matchedCity = Object.keys(worldCityCoords).find(
-                        c => c.toLowerCase() === city.toLowerCase() || 
-                             city.includes(c) || 
-                             c.includes(city)
+                        c => c.toLowerCase() === cityKey.toLowerCase() || 
+                             cityKey.includes(c) || 
+                             c.includes(cityKey)
                     );
                     if (matchedCity) {
                         cityData[matchedCity] = (cityData[matchedCity] || 0) + 1;
+                    } else if (chinaCityCoords[cityKey]) {
+                        // 如果是中国城市也加入显示
+                        cityData[cityKey] = (cityData[cityKey] || 0) + 1;
                     }
-                }
-            });
-            
-            // 如果中国城市多，也加上
-            visitors.forEach(v => {
-                const loc = v.location || {};
-                const city = loc.city;
-                if (city && chinaCityCoords[city] && !cityData[city]) {
-                    cityData[city] = (cityData[city] || 0) + 1;
                 }
             });
             
@@ -939,7 +941,7 @@
                 itemStyle: {
                     color: count > 10 ? '#ff00ff' : count > 5 ? '#00ffff' : '#ffff00'
                 }
-            }));
+            })).filter(item => item.value[0] !== 0);
             
             const option = {
                 backgroundColor: 'transparent',
