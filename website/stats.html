@@ -849,43 +849,59 @@
                         coordinateSystem: 'geo',
                         data: mapData,
                         symbolSize: function(val) {
-                            return Math.max(8, Math.min(30, val[2] * 2));
+                            return Math.max(15, Math.min(50, val[2] * 3));
                         },
                         showEffectOn: 'render',
                         rippleEffect: {
                             brushType: 'stroke',
-                            scale: 3,
-                            period: 4
+                            scale: 4,
+                            period: 3
                         },
                         label: {
                             show: true,
                             position: 'right',
-                            formatter: '{b}',
+                            formatter: '{b}\n{c}次',
                             color: '#fff',
-                            fontSize: 11
+                            fontSize: 12,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            padding: [3, 5],
+                            borderRadius: 3
                         },
                         itemStyle: {
-                            color: '#00ffff',
-                            shadowBlur: 10,
+                            color: function(params) {
+                                const count = params.value[2];
+                                return count > 50 ? '#ff00ff' : count > 20 ? '#00ffff' : '#ffff00';
+                            },
+                            shadowBlur: 20,
                             shadowColor: '#00ffff'
                         },
                         emphasis: {
-                            scale: true
+                            scale: 1.5,
+                            itemStyle: {
+                                shadowBlur: 30
+                            }
                         }
                     },
                     {
                         type: 'lines',
                         coordinateSystem: 'geo',
                         data: linesData,
+                        zlevel: 1,
                         effect: {
                             show: true,
-                            period: 6,
-                            trailLength: 0.7,
+                            period: 4,
+                            trailLength: 0.5,
                             color: '#fff',
-                            symbolSize: 3
+                            symbol: 'arrow',
+                            symbolSize: 6
                         },
                         lineStyle: {
-                            curveness: 0.2
+                            color: function(params) {
+                                return params.dataIndex === 0 ? '#ff00ff' : '#00ffff';
+                            },
+                            width: 2,
+                            curveness: 0.3,
+                            opacity: 0.8
                         }
                     }
                 ]
@@ -893,13 +909,16 @@
             
             // 加载中国地图（本地资源）
             try {
+                console.log('地图数据点:', mapData);
+                console.log('飞线数据:', linesData);
                 const response = await fetch('/map/china.json');
                 const chinaJson = await response.json();
                 echarts.registerMap('china', chinaJson);
                 chinaMapChart.setOption(option);
+                console.log('中国地图加载成功，数据点数量:', mapData.length);
             } catch (error) {
                 console.error('加载中国地图失败:', error);
-                chartDom.innerHTML = '<div style="text-align:center;padding:50px;color:#888">地图加载失败，请刷新重试</div>';
+                chartDom.innerHTML = '<div style="text-align:center;padding:50px;color:#ff6b6b">地图加载失败: ' + error.message + '</div>';
             }
         }
         
