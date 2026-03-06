@@ -747,7 +747,7 @@
             'Nairobi': [36.8219, -1.2921, 'KE']
         };
 
-        // 更新中国地图
+        // 更新中国地图 - 按省份统计
         async function updateChinaMap(visitors) {
             const chartDom = document.getElementById('chinaMap');
             if (!chartDom) return;
@@ -756,55 +756,65 @@
                 chinaMapChart = echarts.init(chartDom);
             }
             
-            // 统计中国各城市访问数（使用全称匹配地图）
-            const cityData = {};
+            // 城市到省份的映射
+            const cityToProvince = {
+                '北京': '北京市', '北京市': '北京市',
+                '上海': '上海市', '上海市': '上海市',
+                '天津': '天津市', '天津市': '天津市',
+                '重庆': '重庆市', '重庆市': '重庆市',
+                '广州': '广东省', '广州市': '广东省', '深圳': '广东省', '深圳市': '广东省', '东莞': '广东省', '佛山市': '广东省',
+                '成都': '四川省', '成都市': '四川省', '绵阳': '四川省',
+                '杭州': '浙江省', '杭州市': '浙江省', '宁波': '浙江省', '温州市': '浙江省',
+                '南京': '江苏省', '南京市': '江苏省', '苏州': '江苏省', '苏州市': '江苏省', '无锡': '江苏省', '常州市': '江苏省',
+                '武汉': '湖北省', '武汉市': '湖北省', '宜昌': '湖北省',
+                '西安': '陕西省', '西安市': '陕西省',
+                '郑州': '河南省', '郑州市': '河南省', '洛阳': '河南省',
+                '长沙': '湖南省', '长沙市': '湖南省',
+                '沈阳': '辽宁省', '沈阳市': '辽宁省', '大连': '辽宁省', '大连市': '辽宁省',
+                '青岛': '山东省', '青岛市': '山东省', '济南': '山东省', '济南市': '山东省',
+                '厦门': '福建省', '厦门市': '福建省', '福州': '福建省', '福州市': '福建省',
+                '合肥': '安徽省', '合肥市': '安徽省',
+                '昆明': '云南省', '昆明市': '云南省',
+                '哈尔滨': '黑龙江省', '哈尔滨市': '黑龙江省',
+                '长春': '吉林省', '长春市': '吉林省',
+                '石家庄': '河北省', '石家庄市': '河北省',
+                '太原': '山西省', '太原市': '山西省',
+                '南昌': '江西省', '南昌市': '江西省',
+                '贵阳': '贵州省', '贵阳市': '贵州省', '遵义': '贵州省',
+                '南宁': '广西壮族自治区', '南宁市': '广西壮族自治区',
+                '兰州': '甘肃省', '兰州市': '甘肃省',
+                '海口': '海南省', '海口市': '海南省',
+                '呼和浩特': '内蒙古自治区', '呼和浩特市': '内蒙古自治区',
+                '乌鲁木齐': '新疆维吾尔自治区', '乌鲁木齐市': '新疆维吾尔自治区',
+                '银川': '宁夏回族自治区', '银川市': '宁夏回族自治区',
+                '西宁': '青海省', '西宁市': '青海省',
+                '拉萨': '西藏自治区', '拉萨市': '西藏自治区',
+                '香港': '香港特别行政区', '澳门': '澳门特别行政区'
+            };
+            
+            // 按省份统计访问数
+            const provinceData = {};
             visitors.forEach(v => {
                 const loc = v.location || {};
                 let city = loc.city || loc.region;
                 if (city) {
-                    // 直接使用原始城市名（带"市"字）匹配
-                    if (chinaCityCoords[city]) {
-                        cityData[city] = (cityData[city] || 0) + 1;
-                    } else {
-                        // 尝试不带"市"字
-                        const cityKey = city.replace(/市$/, '');
-                        if (chinaCityCoords[cityKey]) {
-                            cityData[city] = (cityData[city] || 0) + 1;
-                        }
+                    const province = cityToProvince[city] || cityToProvince[city.replace(/市$/, '')];
+                    if (province) {
+                        provinceData[province] = (provinceData[province] || 0) + 1;
                     }
                 }
             });
             
-            // 转换为地图数据格式（name必须用全称如"深圳市"才能匹配地图）
-            const mapData = Object.entries(cityData).map(([city, count]) => ({
-                name: city,  // 保持原名如"深圳市"
-                value: [...(chinaCityCoords[city] || chinaCityCoords[city.replace(/市$/, '')] || [0, 0]), count],
+            // 转换为地图数据格式
+            const mapData = Object.entries(provinceData).map(([province, count]) => ({
+                name: province,
+                value: count,
                 itemStyle: {
-                    color: count > 10 ? '#ff00ff' : count > 5 ? '#00ffff' : '#ffff00'
+                    areaColor: count > 50 ? 'rgba(255, 0, 255, 0.6)' : 
+                               count > 20 ? 'rgba(0, 255, 255, 0.5)' : 
+                               count > 5 ? 'rgba(255, 255, 0, 0.4)' : 'rgba(0, 255, 255, 0.2)'
                 }
-            })).filter(item => item.value[0] !== 0);
-            
-            // 构建飞线数据（模拟访问流向）
-            const linesData = [];
-            const topCities = Object.entries(cityData)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 5);
-            
-            topCities.forEach(([city, count], idx) => {
-                if (idx < topCities.length - 1) {
-                    const nextCity = topCities[idx + 1][0];
-                    if (chinaCityCoords[city] && chinaCityCoords[nextCity]) {
-                        linesData.push({
-                            coords: [chinaCityCoords[city], chinaCityCoords[nextCity]],
-                            lineStyle: {
-                                color: idx === 0 ? '#ff00ff' : '#00ffff',
-                                width: 2,
-                                opacity: 0.6
-                            }
-                        });
-                    }
-                }
-            });
+            }));
             
             const option = {
                 backgroundColor: 'transparent',
@@ -814,115 +824,66 @@
                     borderColor: '#00ffff',
                     textStyle: { color: '#fff' },
                     formatter: function(params) {
-                        if (params.value && params.value[2]) {
-                            return `${params.name}<br/>访问量: ${params.value[2]}次`;
-                        }
-                        return params.name;
+                        return `${params.name}<br/>访问量: ${params.value || 0}次`;
                     }
                 },
-                geo: {
-                    map: 'china',
-                    roam: true,
-                    zoom: 1.2,
-                    label: {
-                        show: true,
-                        color: '#fff',
-                        fontSize: 10
-                    },
-                    itemStyle: {
-                        areaColor: 'rgba(0, 255, 255, 0.1)',
-                        borderColor: '#00ffff',
-                        borderWidth: 1
-                    },
-                    emphasis: {
-                        itemStyle: {
-                            areaColor: 'rgba(0, 255, 255, 0.3)'
-                        },
-                        label: {
-                            color: '#fff'
-                        }
+                visualMap: {
+                    min: 0,
+                    max: 100,
+                    left: 'left',
+                    top: 'bottom',
+                    text: ['高', '低'],
+                    textStyle: { color: '#fff' },
+                    calculable: true,
+                    inRange: {
+                        color: ['rgba(0, 255, 255, 0.2)', 'rgba(0, 255, 255, 0.5)', 'rgba(255, 0, 255, 0.6)']
                     }
                 },
                 series: [
                     {
-                        type: 'effectScatter',
-                        coordinateSystem: 'geo',
-                        data: mapData,
-                        symbolSize: function(val) {
-                            return Math.max(15, Math.min(50, val[2] * 3));
-                        },
-                        showEffectOn: 'render',
-                        rippleEffect: {
-                            brushType: 'stroke',
-                            scale: 4,
-                            period: 3
-                        },
+                        type: 'map',
+                        map: 'china',
+                        roam: true,
+                        zoom: 1.2,
                         label: {
                             show: true,
-                            position: 'right',
-                            formatter: '{b}\n{c}次',
                             color: '#fff',
-                            fontSize: 12,
-                            backgroundColor: 'rgba(0,0,0,0.5)',
-                            padding: [3, 5],
-                            borderRadius: 3
+                            fontSize: 10
                         },
                         itemStyle: {
-                            color: function(params) {
-                                const count = params.value[2];
-                                return count > 50 ? '#ff00ff' : count > 20 ? '#00ffff' : '#ffff00';
-                            },
-                            shadowBlur: 20,
-                            shadowColor: '#00ffff'
+                            areaColor: 'rgba(0, 255, 255, 0.1)',
+                            borderColor: '#00ffff',
+                            borderWidth: 1
                         },
                         emphasis: {
-                            scale: 1.5,
                             itemStyle: {
-                                shadowBlur: 30
-                            }
-                        }
-                    },
-                    {
-                        type: 'lines',
-                        coordinateSystem: 'geo',
-                        data: linesData,
-                        zlevel: 1,
-                        effect: {
-                            show: true,
-                            period: 4,
-                            trailLength: 0.5,
-                            color: '#fff',
-                            symbol: 'arrow',
-                            symbolSize: 6
-                        },
-                        lineStyle: {
-                            color: function(params) {
-                                return params.dataIndex === 0 ? '#ff00ff' : '#00ffff';
+                                areaColor: 'rgba(255, 0, 255, 0.5)'
                             },
-                            width: 2,
-                            curveness: 0.3,
-                            opacity: 0.8
-                        }
+                            label: {
+                                color: '#fff',
+                                fontSize: 12
+                            }
+                        },
+                        data: mapData
                     }
                 ]
             };
             
             // 加载中国地图（本地资源）
             try {
-                console.log('地图数据点:', mapData);
-                console.log('飞线数据:', linesData);
+                console.log('中国省份数据:', mapData);
                 const response = await fetch('/map/china.json');
                 const chinaJson = await response.json();
                 echarts.registerMap('china', chinaJson);
                 chinaMapChart.setOption(option);
-                console.log('中国地图加载成功，数据点数量:', mapData.length);
+                console.log('中国地图加载成功，省份数量:', mapData.length);
             } catch (error) {
                 console.error('加载中国地图失败:', error);
                 chartDom.innerHTML = '<div style="text-align:center;padding:50px;color:#ff6b6b">地图加载失败: ' + error.message + '</div>';
             }
         }
         
-        // 更新世界地图
+        // 更新世界地图 - 按国家统计
         async function updateWorldMap(visitors) {
             const chartDom = document.getElementById('worldMap');
             if (!chartDom) return;
@@ -931,49 +892,151 @@
                 worldMapChart = echarts.init(chartDom);
             }
             
-            // 统计各国访问数
-            const countryData = {};
-            const cityData = {};
+            // 国家代码到英文名称的映射
+            const countryCodeToName = {
+                'CN': 'China',
+                'US': 'United States',
+                'JP': 'Japan',
+                'KR': 'Korea',
+                'SG': 'Singapore',
+                'GB': 'United Kingdom',
+                'DE': 'Germany',
+                'FR': 'France',
+                'CA': 'Canada',
+                'AU': 'Australia',
+                'RU': 'Russia',
+                'IN': 'India',
+                'BR': 'Brazil',
+                'MX': 'Mexico',
+                'ZA': 'South Africa',
+                'EG': 'Egypt',
+                'AE': 'United Arab Emirates',
+                'TH': 'Thailand',
+                'MY': 'Malaysia',
+                'ID': 'Indonesia',
+                'PH': 'Philippines',
+                'VN': 'Vietnam',
+                'TR': 'Turkey',
+                'IT': 'Italy',
+                'ES': 'Spain',
+                'NL': 'Netherlands',
+                'CH': 'Switzerland',
+                'SE': 'Sweden',
+                'AT': 'Austria',
+                'BE': 'Belgium',
+                'DK': 'Denmark',
+                'FI': 'Finland',
+                'NO': 'Norway',
+                'PL': 'Poland',
+                'PT': 'Portugal',
+                'GR': 'Greece',
+                'CZ': 'Czech Republic',
+                'HU': 'Hungary',
+                'IE': 'Ireland',
+                'NZ': 'New Zealand',
+                'AR': 'Argentina',
+                'CL': 'Chile',
+                'CO': 'Colombia',
+                'PE': 'Peru',
+                'VE': 'Venezuela',
+                'IL': 'Israel',
+                'SA': 'Saudi Arabia',
+                'QA': 'Qatar',
+                'KW': 'Kuwait',
+                'PK': 'Pakistan',
+                'BD': 'Bangladesh',
+                'LK': 'Sri Lanka',
+                'NP': 'Nepal',
+                'MM': 'Myanmar',
+                'KH': 'Cambodia',
+                'LA': 'Lao PDR',
+                'TW': 'China'  // 台湾是中国的一部分
+            };
             
+            // 按国家统计访问数
+            const countryData = {};
             visitors.forEach(v => {
                 const loc = v.location || {};
-                const country = loc.country || 'CN';
-                let city = loc.city;
-                
-                countryData[country] = (countryData[country] || 0) + 1;
-                
-                // 匹配世界城市（中文或英文）
-                if (city) {
-                    // 先尝试直接匹配中文城市（带市字）
-                    if (chinaCityCoords[city]) {
-                        cityData[city] = (cityData[city] || 0) + 1;
-                    } else {
-                        // 尝试去掉"市"字匹配
-                        const cityKey = city.replace(/市$/, '');
-                        if (chinaCityCoords[cityKey]) {
-                            cityData[city] = (cityData[city] || 0) + 1;
-                        } else {
-                            // 尝试匹配英文城市名
-                            const matchedCity = Object.keys(worldCityCoords).find(
-                                c => c.toLowerCase() === cityKey.toLowerCase() || 
-                                     cityKey.toLowerCase().includes(c.toLowerCase()) || 
-                                     c.toLowerCase().includes(cityKey.toLowerCase())
-                            );
-                            if (matchedCity) {
-                                cityData[matchedCity] = (cityData[matchedCity] || 0) + 1;
-                            }
-                        }
-                    }
-                }
+                const countryCode = loc.country || 'CN';
+                const countryName = countryCodeToName[countryCode] || countryCode;
+                countryData[countryName] = (countryData[countryName] || 0) + 1;
             });
             
-            const mapData = Object.entries(cityData).map(([city, count]) => ({
-                name: city,
-                value: [...(worldCityCoords[city] || chinaCityCoords[city] || [0, 0]), count],
+            // 转换为地图数据格式
+            const mapData = Object.entries(countryData).map(([country, count]) => ({
+                name: country,
+                value: count,
                 itemStyle: {
-                    color: count > 10 ? '#ff00ff' : count > 5 ? '#00ffff' : '#ffff00'
+                    areaColor: count > 50 ? 'rgba(255, 0, 255, 0.6)' : 
+                               count > 20 ? 'rgba(0, 255, 255, 0.5)' : 
+                               count > 5 ? 'rgba(255, 255, 0, 0.4)' : 'rgba(255, 0, 255, 0.2)'
                 }
-            })).filter(item => item.value[0] !== 0);
+            }));
+            
+            const option = {
+                backgroundColor: 'transparent',
+                tooltip: {
+                    trigger: 'item',
+                    backgroundColor: 'rgba(26, 26, 46, 0.9)',
+                    borderColor: '#ff00ff',
+                    textStyle: { color: '#fff' },
+                    formatter: function(params) {
+                        return `${params.name}<br/>访问量: ${params.value || 0}次`;
+                    }
+                },
+                visualMap: {
+                    min: 0,
+                    max: 100,
+                    left: 'left',
+                    top: 'bottom',
+                    text: ['高', '低'],
+                    textStyle: { color: '#fff' },
+                    calculable: true,
+                    inRange: {
+                        color: ['rgba(255, 0, 255, 0.2)', 'rgba(255, 0, 255, 0.4)', 'rgba(255, 0, 255, 0.6)']
+                    }
+                },
+                series: [
+                    {
+                        type: 'map',
+                        map: 'world',
+                        roam: true,
+                        zoom: 1.2,
+                        label: {
+                            show: false
+                        },
+                        itemStyle: {
+                            areaColor: 'rgba(255, 0, 255, 0.1)',
+                            borderColor: '#ff00ff',
+                            borderWidth: 0.5
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                areaColor: 'rgba(255, 0, 255, 0.5)'
+                            },
+                            label: {
+                                show: true,
+                                color: '#fff'
+                            }
+                        },
+                        data: mapData
+                    }
+                ]
+            };
+            
+            // 加载世界地图（本地资源）
+            try {
+                console.log('世界国家数据:', mapData);
+                const response = await fetch('/map/world.json');
+                const worldJson = await response.json();
+                echarts.registerMap('world', worldJson);
+                worldMapChart.setOption(option);
+                console.log('世界地图加载成功，国家数量:', mapData.length);
+            } catch (error) {
+                console.error('加载世界地图失败:', error);
+                chartDom.innerHTML = '<div style="text-align:center;padding:50px;color:#ff6b6b">地图加载失败: ' + error.message + '</div>';
+            }
+        }
             
             const option = {
                 backgroundColor: 'transparent',
@@ -1045,7 +1108,7 @@
                 worldMapChart.setOption(option);
             } catch (error) {
                 console.error('加载世界地图失败:', error);
-                chartDom.innerHTML = '<div style="text-align:center;padding:50px;color:#888">地图加载失败，请刷新重试</div>';
+                chartDom.innerHTML = '<div style="text-align:center;padding:50px;color:#ff6b6b">地图加载失败: ' + error.message + '</div>';
             }
         }
         
